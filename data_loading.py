@@ -76,14 +76,15 @@ def load_form_data():
     df_form = df_form.drop(columns=duplicit_columns)
     
     # renaming columns with additional space
-    program_cols_to_strip_space = ['Aikido Ikigai Dojo Brno', 'Aikikai Aikido Brno', 'Kensei Dojo Brno']
+    program_cols_to_strip_space = [
+        'Aikido Ikigai Dojo Brno', 'Aikikai Aikido Brno', 'Kensei Dojo Brno', 'Nebojte se zahraničních soutěží!']
     replace_dict = {}
     for col in program_cols_to_strip_space:
         replace_dict[f'{col} {info_suffix}'] = f'{col}{info_suffix}'
         replace_dict[f'{col} {fun_suffix}'] = f'{col}{fun_suffix}'
         replace_dict[f'Komentář: {col} '] = f'Komentář: {col}'
     df_form = df_form.rename(columns=replace_dict)
-    
+
     # replacing annoyingly long answer
     df_form = df_form.replace({'chci hodnotit podrobně (je toho opravdu hodně, čím víc vyplníte, tím vděčnější budeme)': 
                                'chci hodnotit podrobně'})
@@ -155,6 +156,7 @@ def load_app_data():
     # cleaning data, keeping only last rating
     df_app['user_program'] = df_app['uživatel'] + ' ' + df_app['program ID'].astype(str)
     df_app = df_app.groupby(['user_program']).apply(lambda x: x.sort_values(by='čas feedbacku', ascending=False).head(1))
+    df_app = df_app.droplevel(1, axis=0)
     
     return df_app
 
@@ -227,7 +229,6 @@ def merge_ratings(form_ratings, app_ratings):
     attended_col = program_ratings.loc[['dobré', 'v pohodě', 'špatné']].fillna(0).sum(axis=0).rename('Zúčastnil(a) jsem se')
     
     program_attends = pd.concat((attended_col, program_ratings.loc['Nedostal(a) jsem se']), axis=1)
-    
     program_columns = pd.Series(both_columns.str.replace(info_suffix, '', regex=False).str.replace(fun_suffix, '', regex=False).unique())
 
     return program_ratings, program_attends, program_columns
@@ -249,3 +250,27 @@ def calc_scores(program_ratings, program_columns):
     program_info_score['type'] = program_info_score.index.to_series().map(col_to_category)
     
     return program_fun_score, program_info_score
+
+def remove_index_substr(df, suffix):
+    return df.index.levels[1].str.replace(suffix, '', regex=False)
+
+def calc_ratings_and_comments(df_form, program_columns, df_app):
+    form_fun_stacked = df_form[program_columns + fun_suffix].stack().to_frame(name='fun')
+    form_fun_stacked.index = form_fun_stacked.index.set_levels(remove_index_substr(form_fun_stacked, fun_suffix), level=1)
+    form_info_stacked = df_form[program_columns + info_suffix].stack().to_frame(name='informace')
+    form_info_stacked.index = form_info_stacked.index.set_levels(remove_index_substr(form_info_stacked, info_suffix), level=1)
+    form_comment_stacked = df_form['Komentář: ' + program_columns].stack().to_frame(name='komentář')
+    form_comment_stacked.index = form_comment_stacked.index.set_levels(remove_index_substr(form_comment_stacked, 'Komentář: '), level=1)
+
+    form_ratings_comments = form_fun_stacked.join(form_info_stacked).join(form_comment_stacked)
+    form_ratings_comments = form_ratings_comments[(form_ratings_comments[['fun', 'informace']] != 'Nezúčastnil(a) jsem se').all(axis=1)]
+    form_ratings_comments = form_ratings_comments[(form_ratings_comments[['fun', 'informace']] != 'Nedostal(a) jsem se').all(axis=1)]
+    form_ratings_comments = form_ratings_comments.reset_index().rename(columns={'level_0': 'user', 'level_1': 'název'})
+    form_ratings_comments['user_program'] = form_ratings_comments['user'].astype(str) + form_ratings_comments['název']
+    form_ratings_comments = form_ratings_comments.set_index('user_program')
+    form_ratings_comments = form_ratings_comments.drop(columns='user')
+
+    app_ratings_comments = df_app[['název', 'fun', 'informace', 'komentář']].copy()
+    app_ratings_comments['komentář'] = app_ratings_comments['komentář'].fillna('')
+    app_ratings_comments[['fun', 'informace']] = app_ratings_comments[['fun', 'informace']].replace({3: 'dobré', 2: 'v pohodě', 1: 'špatné'})
+    return form_ratings_comments.append(app_ratings_comments)
