@@ -143,6 +143,31 @@ def load_form_data():
 
     form_ratings = form_ratings.drop('Nezúčastnil(a) jsem se')
     
+    # sanity checks
+    for i in program_columns:
+        info_sum = (df_form[i+info_suffix] == 'Nedostal(a) jsem se').sum()
+        fun_sum = (df_form[i+fun_suffix] == 'Nedostal(a) jsem se').sum()
+        both_sum = ((df_form[i+info_suffix] == 'Nedostal(a) jsem se') & (df_form[i+fun_suffix] == 'Nedostal(a) jsem se')).sum()
+        if info_sum != fun_sum or fun_sum != both_sum:
+            print(i, info_sum, fun_sum, both_sum)
+        assert info_sum == fun_sum == both_sum
+    for i in program_columns:
+        info_sum = (df_form[i+info_suffix] == 'Nezúčastnil(a) jsem se').sum()
+        fun_sum = (df_form[i+fun_suffix] == 'Nezúčastnil(a) jsem se').sum()
+        both_sum = ((df_form[i+info_suffix] == 'Nezúčastnil(a) jsem se') & (df_form[i+fun_suffix] == 'Nezúčastnil(a) jsem se')).sum()
+        if info_sum != fun_sum or fun_sum != both_sum:
+            print(i, info_sum, fun_sum, both_sum)
+        assert info_sum == fun_sum == both_sum
+    attended_values = ['dobré', 'v pohodě', 'špatné', np.nan]
+    for i in program_columns:
+        info_sum = df_form[i+info_suffix].isin(attended_values).sum()
+        fun_sum = df_form[i+fun_suffix].isin(attended_values).sum()
+        both_sum = df_form[i+info_suffix].isin(attended_values).sum() & df_form[i+fun_suffix].isin(attended_values).sum()
+        if info_sum != fun_sum or fun_sum != both_sum:
+            print(i, info_sum, fun_sum, both_sum)
+        assert info_sum == fun_sum == both_sum
+    # end of sanity checks
+    
     return df_form, columns_series, program_columns_ratings, program_columns, form_ratings, form_attends, open_answers
 
 def load_app_data():

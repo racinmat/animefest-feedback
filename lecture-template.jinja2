@@ -4,13 +4,45 @@
     <meta charset="UTF-8">
     <title>Zpětná vazba z formuláře</title>
 </head>
-<body style="">
-<div>
-    <img src="{{ par_cat_path }}" alt="Parallel coordinates plot">
+<style>.container {
+{#max-width: 800px#}{#width: 800px#} width: 1000px
+}
 
+.new-page {
+    page-break-before: always;
+}
+
+.break-after {
+    page-break-after: always;
+}
+
+.keep-together {
+    page-break-inside: avoid;
+}
+
+{# from https://www.w3.org/Style/Examples/007/figures.en.html #}
+figcaption {
+    display: table-caption;
+    caption-side: top;
+{#text-align: center;#}
+}
+
+figure {
+    display: table;
+}
+</style>
+<body style="">
+<h1>Feedback z programu: {{ name }}</h1>
+<div>
     <img src="{{ bar_chart_path }}" alt="Bar chart plot">
 
+    <h3>Hodnocení se slovním komentářem z formuáře i aplikace</h3>
     {{ comments_html }}
+
+    <div class="new-page">
+        <h3>Hodnocení z formuláře</h3>
+        <img src="{{ par_cat_path }}" alt="Parallel coordinates plot">
+    </div>
 </div>
 </body>
 </html>
