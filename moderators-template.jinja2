@@ -32,17 +32,17 @@ figure {
 }
 </style>
 <body style="">
-<h1>Feedback z programu: {{ name }}</h1>
+<h1>Feedback pro moderátory</h1>
 <div>
-    <img src="{{ bar_chart_path }}" alt="Bar chart plot">
+    <p>Pozn.: K dispozici jsou pouze slovní hodnocení.</p>
 
-    <h3>Hodnocení se slovním komentářem z formuáře i aplikace</h3>
+    <h3>Celkové hodnocení moderátorů (pouze formulář)</h3>
     {{ comments_html }}
 
-    <div class="new-page">
-        <h3>Hodnocení z formuláře</h3>
-        <img src="{{ par_cat_path }}" alt="Parallel coordinates plot">
-    </div>
+    {% for lecture, comments_html in per_lecture_comments.items() %}
+        <h3>Hodnocení moderátorů přednášky {{ lecture }}</h3>
+        {{ comments_html }}
+    {% endfor %}
 </div>
 </body>
 </html>

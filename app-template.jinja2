@@ -32,17 +32,26 @@ figure {
 }
 </style>
 <body style="">
-<h1>Feedback z programu: {{ name }}</h1>
+<h1>Feedback pro aplikaci</h1>
 <div>
-    <img src="{{ bar_chart_path }}" alt="Bar chart plot">
-
-    <h3>Hodnocení se slovním komentářem z formuáře i aplikace</h3>
+    <img src="{{ bar_chart_usage_path }}" alt="Bar chart plot usage">
+    <img src="{{ bar_chart_bugs_path }}" alt="Bar chart plot bugs">
+    <img src="{{ par_cat_path }}" alt="Parallel coordinates">
     {{ comments_html }}
 
-    <div class="new-page">
-        <h3>Hodnocení z formuláře</h3>
-        <img src="{{ par_cat_path }}" alt="Parallel coordinates plot">
+    <div class="keep-together">
+        <h3>Hodnocení aplikace z formuláře</h3>
+        {{ app_feedback_html }}
+        {{ app_feedback_2_html }}
     </div>
+
+    {% for column, comments_html in per_column_comments.items() %}
+        <div class="keep-together">
+            <h3>Hodnocení aplikace v: {{ column }}</h3>
+            {{ comments_html }}
+        </div>
+    {% endfor %}
+
 </div>
 </body>
 </html>
